@@ -1,0 +1,87 @@
+# --------------------------------------------------------
+# OctFormer: Octree-based Transformers for 3D Point Clouds
+# Copyright (c) 2023 Peng-Shuai Wang <wangps@hotmail.com>
+# Licensed under The MIT License [see LICENSE for details]
+# Written by Peng-Shuai Wang
+# --------------------------------------------------------
+
+SOLVER:
+  gpu: (0,)
+  run: train
+  logdir: logs/nuscenes/pointmamba_seg_full
+  best_val: max:mIoU_part
+
+  ckpt_num: 100
+  max_epoch: 500
+  test_every_epoch: 100
+  save_every_epoch: 10
+  log_per_iter: 100
+
+  weight_decay: 0.05
+  type: adamw_attn
+
+  lr: 0.0015
+  lr_type: step_warmup
+  milestones: (150, 300)
+
+DATA:
+  train:
+    name: nuscenes
+
+    # octree building
+    depth: 11
+    full_depth: 2
+
+    # data augmentations
+    distort: True
+    angle: (5, 5, 180)
+    scale: 0.2
+    flip: (0.5, 0.5, 0.0)
+    uniform: False
+    max_npt: -1    # max point number of random cropping
+    
+    # data loading
+    location: data/nuscenes/train
+    filelist: data/nuscenes/v1.0-mini.txt
+    batch_size: 1
+    shuffle: True
+    num_workers: 2
+
+  test:
+    name: nuscenes
+
+    # octree building
+    depth: 11
+    full_depth: 2
+
+    # data augmentations
+    distort: False  # no data augmentation by default
+    angle: (5, 5, 180)
+    scale: 0.2
+    flip: (0.5, 0.5, 0.0)
+    uniform: False
+    max_npt: -1
+
+    # data loading
+    location: data/nuscenes/train
+    filelist: data/nuscenes/v1.0-mini.txt
+    batch_size: 1
+    shuffle: False
+    num_workers: 2
+
+MODEL:
+  name: pointmamba_seg
+  # P -> Position (3 channels)
+  # F -> Color (2 channels)
+  feature: PF
+  channel: 5      # total input channels
+  nout: 32        # output channels
+
+  nempty: True    # unused
+  interp: nearest # unused
+  sync_bn: True   # unused
+  # find_unused_parameters: True
+
+LOSS:
+  mask: -1
+  num_class: 32

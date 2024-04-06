@@ -83,7 +83,9 @@ def get_classification_model(flags):
 
 
 def get_segmentation_dataset(flags):
-  if flags.name.lower() == 'shapenet':
+  if flags.name.lower() == 'nuscenes':
+    return datasets.get_nuscenes_dataset(flags)
+  elif flags.name.lower() == 'shapenet':
     return datasets.get_shapenet_seg_dataset(flags)
   elif flags.name.lower() == 'scannet':
     return datasets.get_scannet_dataset(flags)

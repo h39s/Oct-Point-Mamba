@@ -57,8 +57,7 @@ class SegSolver(Solver):
     query_pts = torch.cat([points.points, points.batch_id], dim=1)
 
     logit = self.model(data, octree, octree.depth, query_pts)
-    label_mask = points.labels > self.FLAGS.LOSS.mask  # filter labels
-    return logit[label_mask], points.labels[label_mask]
+    return logit, points.labels
 
   def config_optimizer(self):
     flags = self.FLAGS.SOLVER
@@ -79,7 +78,7 @@ class SegSolver(Solver):
   def train_step(self, batch):
     batch = self.process_batch(batch, self.FLAGS.DATA.train)
     logit, label = self.model_forward(batch)
-    loss = self.loss_function(logit, label)
+    loss = self.loss_function(logit, label.ravel())
     accu = self.accuracy(logit, label)
     return {'train/loss': loss, 'train/accu': accu}
 
@@ -87,7 +86,7 @@ class SegSolver(Solver):
     batch = self.process_batch(batch, self.FLAGS.DATA.test)
     with torch.no_grad():
       logit, label = self.model_forward(batch)
-    loss = self.loss_function(logit, label)
+    loss = self.loss_function(logit, label.ravel())
     accu = self.accuracy(logit, label)
     num_class = self.FLAGS.LOSS.num_class
     IoU, insc, union = self.IoU_per_shape(logit, label, num_class)
